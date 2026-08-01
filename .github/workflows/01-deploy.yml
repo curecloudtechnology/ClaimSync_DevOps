@@ -3,6 +3,10 @@ name: ClaimSync Deployment
 on:
   workflow_dispatch:
 
+concurrency:
+  group: claimsync-deployment
+  cancel-in-progress: false
+
 jobs:
   deployment:
     name: Verify Deployment Workflow
