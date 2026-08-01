@@ -1,0 +1,14 @@
+name: ClaimSync Deployment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deployment:
+    name: Verify Deployment Workflow
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print Message
+        run: |
+          echo "Deployment workflow started successfully."
