@@ -1,0 +1,35 @@
+name: Test Repository Checkout
+
+on:
+  workflow_dispatch:
+
+jobs:
+  checkout-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout DevOps Repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Frontend Repository
+        uses: actions/checkout@v4
+        with:
+          repository: curecloudtechnology/ClaimSync_Frontend
+          token: ${{ secrets.GH_PAT }}
+          path: frontend
+
+      - name: Checkout Backend Repository
+        uses: actions/checkout@v4
+        with:
+          repository: curecloudtechnology/ClaimSync_Backend
+          token: ${{ secrets.GH_PAT }}
+          path: backend
+
+      - name: Verify Checkout
+        run: |
+          echo "===== Frontend ====="
+          ls -la frontend
+
+          echo ""
+          echo "===== Backend ====="
+          ls -la backend
