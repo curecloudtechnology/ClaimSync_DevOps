@@ -69,3 +69,11 @@ jobs:
         run: |
           echo "Generated JAR files:"
           ls -la backend/target
+      
+       # Upload JAR as GitHub Artifact
+      - name: Upload JAR Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClaimSync-JAR
+          path: backend/target/*.jar
+          retention-days: 7
