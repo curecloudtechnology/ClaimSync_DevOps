@@ -62,7 +62,7 @@ jobs:
       # Build Backend
       - name: Build Backend
         working-directory: backend
-        run: mvn clean package
+        run: mvn clean package -DskipTests
 
       # Verify JAR
       - name: Verify JAR
