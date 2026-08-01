@@ -1,16 +1,13 @@
-name: Test Repository Checkout
+name: Test Frontend Build
 
 on:
   workflow_dispatch:
 
 jobs:
-  checkout-test:
+  frontend-build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout DevOps Repository
-        uses: actions/checkout@v4
-
       - name: Checkout Frontend Repository
         uses: actions/checkout@v4
         with:
@@ -18,18 +15,22 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: frontend
 
-      - name: Checkout Backend Repository
-        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          repository: curecloudtechnology/ClaimSync_Backend
-          token: ${{ secrets.GH_PAT }}
-          path: backend
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Verify Checkout
+      - name: Install Dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Build Frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Verify Build Output
         run: |
-          echo "===== Frontend ====="
-          ls -la frontend
-
-          echo ""
-          echo "===== Backend ====="
-          ls -la backend
+          echo "Contents of dist folder:"
+          ls -la frontend/dist
