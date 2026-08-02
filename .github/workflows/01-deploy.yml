@@ -292,5 +292,45 @@ jobs:
               Write-Warning "Application is not running or shutdown endpoint is unavailable."
               Write-Host $_.Exception.Message
           }
+
+      #########################################################
+      # Wait Until Application Stops
+      #########################################################
+
+      - name: Wait Until Application Stops
+        shell: powershell
+        run: |
+
+          Write-Host ""
+          Write-Host "========== Waiting for Application =========="
+
+          $timeout = 60
+          $elapsed = 0
+
+          while ($elapsed -lt $timeout)
+          {
+              $connection = Get-NetTCPConnection `
+                  -LocalPort 8080 `
+                  -State Listen `
+                  -ErrorAction SilentlyContinue
+
+              if ($null -eq $connection)
+              {
+                  Write-Host ""
+                  Write-Host "Application stopped successfully."
+
+                  exit 0
+              }
+
+              Write-Host "Waiting... ($elapsed seconds)"
+
+              Start-Sleep -Seconds 2
+
+              $elapsed += 2
+          }
+
+          throw "Application did not stop within 60 seconds."
+
+
       
       
