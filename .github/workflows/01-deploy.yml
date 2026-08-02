@@ -9,16 +9,35 @@ concurrency:
 
 jobs:
   deployment:
-    name: Verify Deployment Workflow
+    name: ClaimSync Deployment
     runs-on: self-hosted
 
     steps:
+
       - name: Runner Information
+        shell: cmd
         run: |
           hostname
           echo %COMPUTERNAME%
           echo %USERNAME%
 
       - name: Verify Deployment Workflow
+        shell: cmd
         run: |
-          echo "Running on self-hosted runner."
+          echo Running on self-hosted runner.
+
+      - name: Update Frontend Repository
+        shell: powershell
+        run: |
+          Write-Host "Updating Frontend..."
+          Set-Location "D:\DevOps\Repositories\ClaimSync_Frontend"
+          git checkout dev
+          git pull origin dev
+
+      - name: Update Backend Repository
+        shell: powershell
+        run: |
+          Write-Host "Updating Backend..."
+          Set-Location "D:\DevOps\Repositories\ClaimSync_Backend"
+          git checkout dev
+          git pull origin dev
