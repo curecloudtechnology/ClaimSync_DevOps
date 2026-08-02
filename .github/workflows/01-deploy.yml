@@ -66,3 +66,25 @@ jobs:
           }
 
           Write-Host "Frontend build completed successfully."
+
+      - name: Bundle Frontend into Backend
+        shell: powershell
+        run: |
+          $frontendDist = "D:\DevOps\Repositories\ClaimSync_Frontend\dist"
+          $backendStatic = "D:\DevOps\Repositories\ClaimSync_Backend\src\main\resources\static"
+
+          Write-Host "Removing existing static folder..."
+
+          if (Test-Path $backendStatic) {
+              Remove-Item "$backendStatic\*" -Recurse -Force
+          }
+
+          Write-Host "Copying frontend build..."
+
+          Copy-Item "$frontendDist\*" $backendStatic -Recurse -Force
+
+          if (!(Test-Path "$backendStatic\index.html")) {
+              throw "Frontend bundle copy failed."
+          }
+
+          Write-Host "Frontend successfully bundled into backend."
