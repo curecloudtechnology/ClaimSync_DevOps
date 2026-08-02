@@ -394,7 +394,47 @@ jobs:
 
           Write-Host ""
           Write-Host "Application started." 
-       
+      
+            #########################################################
+      # Verify Application Health
+      #########################################################
+
+      - name: Verify Application Health
+        shell: powershell
+        run: |
+
+          Write-Host ""
+          Write-Host "========== Verifying Application Health =========="
+
+          $timeout = 120
+          $elapsed = 0
+
+          while ($elapsed -lt $timeout)
+          {
+              try
+              {
+                  $response = Invoke-RestMethod `
+                      -Method GET `
+                      -Uri "http://localhost:8080/actuator/health"
+
+                  if ($response.status -eq "UP")
+                  {
+                      Write-Host ""
+                      Write-Host "Application is healthy."
+
+                      exit 0
+                  }
+              }
+              catch
+              {
+                  Write-Host "Waiting for application startup..."
+              }
+
+              Start-Sleep -Seconds 5
+              $elapsed += 5
+          }
+
+          throw "Application failed health check."
 
       
       
