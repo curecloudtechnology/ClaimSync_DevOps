@@ -301,3 +301,69 @@ jobs:
 
           Write-Host ""
           Write-Host "Application stopped successfully."
+
+    #########################################################
+# Gracefully Stop Running Application
+#########################################################
+
+- name: Gracefully Stop Running Application
+  shell: powershell
+  continue-on-error: true
+  run: |
+
+    Write-Host ""
+    Write-Host "========== Graceful Shutdown =========="
+
+    try
+    {
+        Invoke-RestMethod `
+            -Method POST `
+            -ContentType "application/json" `
+            -Body "{}" `
+            -Uri "http://localhost:8080/actuator/shutdown"
+
+        Write-Host ""
+        Write-Host "Shutdown request accepted."
+    }
+    catch
+    {
+        Write-Host ""
+        Write-Host "Application not running or shutdown endpoint unavailable."
+        Write-Host $_.Exception.Message
+    }
+
+#########################################################
+# Wait Until Application Stops
+#########################################################
+
+- name: Wait Until Application Stops
+  shell: powershell
+  run: |
+
+    Write-Host ""
+    Write-Host "========== Waiting for Application =========="
+
+    $timeout = 60
+    $elapsed = 0
+
+    while ($elapsed -lt $timeout)
+    {
+        $connection = Get-NetTCPConnection `
+            -LocalPort 8080 `
+            -State Listen `
+            -ErrorAction SilentlyContinue
+
+        if ($null -eq $connection)
+        {
+            Write-Host ""
+            Write-Host "Application stopped successfully."
+
+            exit 0
+        }
+
+        Start-Sleep -Seconds 2
+
+        $elapsed += 2
+    }
+
+    throw "Application did not stop within 60 seconds."
