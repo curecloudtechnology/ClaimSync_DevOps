@@ -437,4 +437,108 @@ jobs:
           throw "Application failed health check."
 
       
-      
+      #########################################################
+      # Automatic Rollback
+      #########################################################
+
+      - name: Automatic Rollback
+        if: failure()
+        shell: powershell
+        run: |
+
+          Write-Host ""
+          Write-Host "========== Automatic Rollback =========="
+
+          $backupRoot = "D:\DevOps\Backups"
+          $deployFolder = "D:\DevOps\Deploy"
+          $deployJar = "$deployFolder\ClaimSync.jar"
+
+          #
+          # Stop failed application (if running)
+          #
+          $process = Get-CimInstance Win32_Process |
+              Where-Object {
+                  $_.Name -eq "java.exe" -and
+                  $_.CommandLine -like "*ClaimSync.jar*"
+              }
+
+          if ($process)
+          {
+              Write-Host "Stopping failed application..."
+
+              Stop-Process -Id $process.ProcessId -Force
+
+              Start-Sleep -Seconds 5
+          }
+
+          #
+          # Find latest backup
+          #
+          $latestBackup = Get-ChildItem $backupRoot -Directory |
+              Sort-Object LastWriteTime -Descending |
+              Select-Object -First 1
+
+          if ($null -eq $latestBackup)
+          {
+              throw "No backup folder found."
+          }
+
+          $backupJar = Join-Path $latestBackup.FullName "ClaimSync.jar"
+
+          if (!(Test-Path $backupJar))
+          {
+              throw "Backup JAR not found."
+          }
+
+          Write-Host "Latest backup:"
+          Write-Host $backupJar
+
+          #
+          # Restore backup
+          #
+          Copy-Item `
+              $backupJar `
+              $deployJar `
+              -Force
+
+          Write-Host "Backup restored."
+
+          #
+          # Start previous version
+          #
+          Start-Process `
+              -FilePath "java" `
+              -ArgumentList "-jar `"$deployJar`"" `
+              -WorkingDirectory $deployFolder `
+              -WindowStyle Hidden
+
+          Write-Host "Previous version started."
+
+          #
+          # Verify rollback
+          #
+          $timeout = 60
+          $elapsed = 0
+
+          while ($elapsed -lt $timeout)
+          {
+              try
+              {
+                  $response = Invoke-RestMethod `
+                      -Method GET `
+                      -Uri "http://localhost:8080/actuator/health"
+
+                  if ($response.status -eq "UP")
+                  {
+                      throw "Deployment failed. Rollback completed successfully."
+                  }
+              }
+              catch
+              {
+              }
+
+              Start-Sleep -Seconds 5
+              $elapsed += 5
+          }
+
+          throw "Rollback failed. Manual intervention required."
