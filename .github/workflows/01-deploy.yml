@@ -14,6 +14,10 @@ jobs:
 
     steps:
 
+      #########################################################
+      # Runner Information
+      #########################################################
+
       - name: Runner Information
         shell: cmd
         run: |
@@ -21,16 +25,25 @@ jobs:
           echo %COMPUTERNAME%
           echo %USERNAME%
 
+      #########################################################
+      # Workflow Verification
+      #########################################################
+
       - name: Verify Deployment Workflow
         shell: cmd
         run: |
           echo Running on self-hosted runner.
+
+      #########################################################
+      # Git Synchronization
+      #########################################################
 
       - name: Update Frontend Repository
         shell: powershell
         run: |
           Write-Host "Updating Frontend..."
           Set-Location "D:\DevOps\Repositories\ClaimSync_Frontend"
+
           git checkout dev
           git pull origin dev
 
@@ -39,52 +52,101 @@ jobs:
         run: |
           Write-Host "Updating Backend..."
           Set-Location "D:\DevOps\Repositories\ClaimSync_Backend"
+
           git checkout dev
           git pull origin dev
+
+      #########################################################
+      # Environment Verification
+      #########################################################
 
       - name: Verify Build Environment
         shell: powershell
         run: |
           Write-Host "========== Environment =========="
+
           git --version
           node --version
           npm --version
           java -version
           mvn -version
 
+      #########################################################
+      # Frontend Build
+      #########################################################
+
       - name: Build Frontend
         shell: powershell
         run: |
+
           Write-Host "========== Building Frontend =========="
+
           Set-Location "D:\DevOps\Repositories\ClaimSync_Frontend"
 
           npm ci
+
           npm run build
 
-          if (!(Test-Path ".\dist")) {
-              throw "Frontend build failed. dist folder not found."
+          if (!(Test-Path ".\dist"))
+          {
+              throw "Frontend build failed."
           }
 
           Write-Host "Frontend build completed successfully."
 
+      #########################################################
+      # Bundle Frontend
+      #########################################################
+
       - name: Bundle Frontend into Backend
         shell: powershell
         run: |
-          $frontendDist = "D:\DevOps\Repositories\ClaimSync_Frontend\dist"
-          $backendStatic = "D:\DevOps\Repositories\ClaimSync_Backend\src\main\resources\static"
 
-          Write-Host "Removing existing static folder..."
+          $frontendDist="D:\DevOps\Repositories\ClaimSync_Frontend\dist"
 
-          if (Test-Path $backendStatic) {
+          $backendStatic="D:\DevOps\Repositories\ClaimSync_Backend\src\main\resources\static"
+
+          Write-Host "Cleaning static folder..."
+
+          if(Test-Path $backendStatic)
+          {
               Remove-Item "$backendStatic\*" -Recurse -Force
           }
 
-          Write-Host "Copying frontend build..."
+          Write-Host "Copying new frontend..."
 
           Copy-Item "$frontendDist\*" $backendStatic -Recurse -Force
 
-          if (!(Test-Path "$backendStatic\index.html")) {
-              throw "Frontend bundle copy failed."
+          if(!(Test-Path "$backendStatic\index.html"))
+          {
+              throw "Frontend bundle failed."
           }
 
-          Write-Host "Frontend successfully bundled into backend."
+          Write-Host "Frontend bundled successfully."
+
+      #########################################################
+      # Backend Build
+      #########################################################
+
+      - name: Build Backend
+        shell: powershell
+        run: |
+
+          Write-Host "========== Building Backend =========="
+
+          Set-Location "D:\DevOps\Repositories\ClaimSync_Backend"
+
+          mvn clean package
+
+          $jar = Get-ChildItem ".\target\*.jar" |
+                 Where-Object { $_.Name -notmatch "original" } |
+                 Select-Object -First 1
+
+          if($null -eq $jar)
+          {
+              throw "Backend JAR was not generated."
+          }
+
+          Write-Host ""
+          Write-Host "Generated JAR:"
+          Write-Host $jar.FullName
