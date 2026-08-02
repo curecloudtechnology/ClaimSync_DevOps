@@ -364,7 +364,36 @@ jobs:
           Write-Host "Deployment completed successfully."
 
           Get-Item $deployJar | Format-List Name,Length,LastWriteTime
-          
+
+      #########################################################
+      # Start Application
+      #########################################################
+
+      - name: Start Application
+        shell: powershell
+        run: |
+
+          Write-Host ""
+          Write-Host "========== Starting Application =========="
+
+          $deployFolder = "D:\DevOps\Deploy"
+          $deployJar = "$deployFolder\ClaimSync.jar"
+
+          if (!(Test-Path $deployJar))
+          {
+              throw "Deployment JAR not found."
+          }
+
+          Start-Process `
+              -FilePath "java" `
+              -ArgumentList "-jar `"$deployJar`"" `
+              -WorkingDirectory $deployFolder `
+              -WindowStyle Hidden
+
+          Start-Sleep -Seconds 5
+
+          Write-Host ""
+          Write-Host "Application started." 
        
 
       
