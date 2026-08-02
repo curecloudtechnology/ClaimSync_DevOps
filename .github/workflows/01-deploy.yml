@@ -223,3 +223,37 @@ jobs:
           Write-Host "Backup created."
 
           Write-Host "$backupFolder\ClaimSync.jar"
+      
+      #########################################################
+      # Verify Deploy Folder
+      #########################################################
+
+      - name: Verify Deploy Folder
+        shell: powershell
+        run: |
+
+          Write-Host ""
+          Write-Host "========== Verify Deploy Folder =========="
+
+          $deployFolder = "D:\DevOps\Deploy"
+
+          if (!(Test-Path $deployFolder))
+          {
+              throw "Deploy folder does not exist."
+          }
+
+          $deployJar = "$deployFolder\ClaimSync.jar"
+
+          if (!(Test-Path $deployJar))
+          {
+              Write-Warning "No deployed JAR found."
+
+              Write-Host "This is acceptable for the first deployment."
+
+              exit 0
+          }
+
+          Write-Host ""
+          Write-Host "Current deployment found."
+
+          Get-Item $deployJar | Format-List Name,Length,LastWriteTime
