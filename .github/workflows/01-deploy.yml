@@ -26,7 +26,7 @@ jobs:
           echo %USERNAME%
 
       #########################################################
-      # Workflow Verification
+      # Verify Workflow
       #########################################################
 
       - name: Verify Deployment Workflow
@@ -43,7 +43,6 @@ jobs:
         run: |
           Write-Host "Updating Frontend..."
           Set-Location "D:\DevOps\Repositories\ClaimSync_Frontend"
-
           git checkout dev
           git pull origin dev
 
@@ -52,7 +51,6 @@ jobs:
         run: |
           Write-Host "Updating Backend..."
           Set-Location "D:\DevOps\Repositories\ClaimSync_Backend"
-
           git checkout dev
           git pull origin dev
 
@@ -63,8 +61,6 @@ jobs:
       - name: Verify Build Environment
         shell: powershell
         run: |
-          Write-Host "========== Environment =========="
-
           git --version
           node --version
           npm --version
@@ -78,21 +74,15 @@ jobs:
       - name: Build Frontend
         shell: powershell
         run: |
-
-          Write-Host "========== Building Frontend =========="
-
           Set-Location "D:\DevOps\Repositories\ClaimSync_Frontend"
 
           npm ci
-
           npm run build
 
           if (!(Test-Path ".\dist"))
           {
               throw "Frontend build failed."
           }
-
-          Write-Host "Frontend build completed successfully."
 
       #########################################################
       # Bundle Frontend
@@ -102,27 +92,20 @@ jobs:
         shell: powershell
         run: |
 
-          $frontendDist="D:\DevOps\Repositories\ClaimSync_Frontend\dist"
+          $frontendDist = "D:\DevOps\Repositories\ClaimSync_Frontend\dist"
+          $backendStatic = "D:\DevOps\Repositories\ClaimSync_Backend\src\main\resources\static"
 
-          $backendStatic="D:\DevOps\Repositories\ClaimSync_Backend\src\main\resources\static"
-
-          Write-Host "Cleaning static folder..."
-
-          if(Test-Path $backendStatic)
+          if (Test-Path $backendStatic)
           {
               Remove-Item "$backendStatic\*" -Recurse -Force
           }
 
-          Write-Host "Copying new frontend..."
-
           Copy-Item "$frontendDist\*" $backendStatic -Recurse -Force
 
-          if(!(Test-Path "$backendStatic\index.html"))
+          if (!(Test-Path "$backendStatic\index.html"))
           {
-              throw "Frontend bundle failed."
+              throw "Bundle failed."
           }
-
-          Write-Host "Frontend bundled successfully."
 
       #########################################################
       # Backend Build
@@ -132,8 +115,6 @@ jobs:
         shell: powershell
         run: |
 
-          Write-Host "========== Building Backend =========="
-
           Set-Location "D:\DevOps\Repositories\ClaimSync_Backend"
 
           mvn clean package
@@ -142,11 +123,42 @@ jobs:
                  Where-Object { $_.Name -notmatch "original" } |
                  Select-Object -First 1
 
-          if($null -eq $jar)
+          if ($null -eq $jar)
           {
-              throw "Backend JAR was not generated."
+              throw "JAR not generated."
+          }
+
+      #########################################################
+      # Publish Build Artifact
+      #########################################################
+
+      - name: Publish Build Artifact
+        shell: powershell
+        run: |
+
+          $jar = Get-ChildItem "D:\DevOps\Repositories\ClaimSync_Backend\target\*.jar" |
+                 Where-Object { $_.Name -notmatch "original" } |
+                 Select-Object -First 1
+
+          if ($null -eq $jar)
+          {
+              throw "Build artifact not found."
+          }
+
+          $outputFolder = "D:\DevOps\Output"
+
+          if (!(Test-Path $outputFolder))
+          {
+              New-Item -ItemType Directory -Path $outputFolder | Out-Null
+          }
+
+          Copy-Item $jar.FullName "$outputFolder\ClaimSync.jar" -Force
+
+          if (!(Test-Path "$outputFolder\ClaimSync.jar"))
+          {
+              throw "Artifact publishing failed."
           }
 
           Write-Host ""
-          Write-Host "Generated JAR:"
-          Write-Host $jar.FullName
+          Write-Host "Published Artifact:"
+          Write-Host "$outputFolder\ClaimSync.jar"
