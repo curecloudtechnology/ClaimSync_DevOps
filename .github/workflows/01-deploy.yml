@@ -257,3 +257,47 @@ jobs:
           Write-Host "Current deployment found."
 
           Get-Item $deployJar | Format-List Name,Length,LastWriteTime
+      
+      
+      #########################################################
+      # Stop Running Application
+      #########################################################
+
+      - name: Stop Running Application
+        shell: powershell
+        run: |
+
+          Write-Host ""
+          Write-Host "========== Stop Running Application =========="
+
+          $jarName = "ClaimSync.jar"
+
+          # Find any Java process running this JAR
+          $process = Get-CimInstance Win32_Process |
+            Where-Object {
+              $_.Name -eq "java.exe" -and
+              $_.CommandLine -like "*$jarName*"
+            }
+
+          if ($null -eq $process) {
+              Write-Host "No running ClaimSync application found."
+              Write-Host "Skipping..."
+              exit 0
+          }
+
+          Write-Host ""
+          Write-Host "Found running application."
+          Write-Host "PID : $($process.ProcessId)"
+
+          Stop-Process -Id $process.ProcessId -Force
+
+          Start-Sleep -Seconds 5
+
+          $stillRunning = Get-Process -Id $process.ProcessId -ErrorAction SilentlyContinue
+
+          if ($stillRunning) {
+              throw "Failed to stop ClaimSync application."
+          }
+
+          Write-Host ""
+          Write-Host "Application stopped successfully."
