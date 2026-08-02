@@ -331,6 +331,41 @@ jobs:
 
           throw "Application did not stop within 60 seconds."
 
+      #########################################################
+      # Deploy New Application
+      #########################################################
+
+      - name: Deploy New Application
+        shell: powershell
+        run: |
+
+          Write-Host ""
+          Write-Host "========== Deploy New Application =========="
+
+          $sourceJar = "D:\DevOps\Output\ClaimSync.jar"
+          $deployJar = "D:\DevOps\Deploy\ClaimSync.jar"
+
+          if (!(Test-Path $sourceJar))
+          {
+              throw "Build artifact not found."
+          }
+
+          Copy-Item `
+              $sourceJar `
+              $deployJar `
+              -Force
+
+          if (!(Test-Path $deployJar))
+          {
+              throw "Deployment failed."
+          }
+
+          Write-Host ""
+          Write-Host "Deployment completed successfully."
+
+          Get-Item $deployJar | Format-List Name,Length,LastWriteTime
+          
+       
 
       
       
