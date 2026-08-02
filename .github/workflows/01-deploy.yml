@@ -41,3 +41,13 @@ jobs:
           Set-Location "D:\DevOps\Repositories\ClaimSync_Backend"
           git checkout dev
           git pull origin dev
+
+      - name: Verify Build Environment
+        shell: powershell
+        run: |
+          Write-Host "========== Environment =========="
+          git --version
+          node --version
+          npm --version
+          java -version
+          mvn -version
