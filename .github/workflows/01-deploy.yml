@@ -10,10 +10,15 @@ concurrency:
 jobs:
   deployment:
     name: Verify Deployment Workflow
-    runs-on:
-      - self-hosted
+    runs-on: self-hosted
 
     steps:
-      - name: Print Message
+      - name: Runner Information
         run: |
-          echo "Deployment workflow started successfully."
+          hostname
+          echo %COMPUTERNAME%
+          echo %USERNAME%
+
+      - name: Verify Deployment Workflow
+        run: |
+          echo "Running on self-hosted runner."
