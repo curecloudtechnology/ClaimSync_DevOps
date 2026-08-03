@@ -385,17 +385,14 @@ jobs:
           }
 
           Start-Process `
-              -FilePath "java" `
-              -ArgumentList "-jar `"$deployJar`"" `
-              -WorkingDirectory $deployFolder `
-              -WindowStyle Hidden
-
-          Start-Sleep -Seconds 5
+            -FilePath "cmd.exe" `
+            -WorkingDirectory $deployFolder `
+            -ArgumentList "/k cd /d `"$deployFolder`" && java -jar ClaimSync.jar"
 
           Write-Host ""
-          Write-Host "Application started." 
+          Write-Host "Application started."
       
-            #########################################################
+      #########################################################
       # Verify Application Health
       #########################################################
 
