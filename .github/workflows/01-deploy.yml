@@ -386,8 +386,7 @@ jobs:
 
           Start-Process `
             -FilePath "cmd.exe" `
-            -WorkingDirectory $deployFolder `
-            -ArgumentList "/k cd /d `"$deployFolder`" && java -jar ClaimSync.jar"
+            -ArgumentList "/k D:\DevOps\Deploy\start-claimsync.bat"
 
           Write-Host ""
           Write-Host "Application started."
